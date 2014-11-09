@@ -1,8 +1,6 @@
 #include "HelloWorldScene.h"
 #include <stdio.h>
 #include <math.h>
-#define FALLING_TIME 5
-#define VEC_SIZE 500
 USING_NS_CC;
 
 
@@ -99,82 +97,42 @@ bool HelloWorld::init()
     timer = 0;
     fill_symbols();
     load_characters();
-    schedule(schedule_selector(HelloWorld::symbols_falling), 0.5);
-    schedule(schedule_selector(HelloWorld::check_touch), 0.5);
+    MyLabel::back_char_id = 0;
+    MyLabel::back_char_mat = character_mat;
+    schedule(schedule_selector(HelloWorld::init_add_labels), 0.5, VEC_SIZE/50, 0);
+    schedule(schedule_selector(HelloWorld::time_circle), EACH_CHAR_TIME/2.0);
 //    show_char(0);
     return true;
 }
 
-Label * HelloWorld::rand_add_label(Label* label) {
-    if (nullptr == label) {
-        double rand_num = CCRANDOM_0_1();
-        string& txt = all_symbols[floor(rand_num * all_symbols.size())];
-        int font_size = 25*(rand_num + 1);
-        label = Label::create(txt.c_str(), "Arial", font_size);
-        label->setTextColor(Color4B(0, rand_num*20 + 80, 0, rand_num*255));
-        this->addChild(label, rand_num*100);
-    }
-    int label_left =  origin.x + label->getContentSize().width/2;
-    int label_right = visibleSize.width - label->getContentSize().width/2;
-    int label_up = visibleSize.height - label->getContentSize().height/2 +
-                    visibleSize.height*CCRANDOM_0_1();
-    
-    label->setPosition(Vec2(CCRANDOM_0_1()*(label_right - label_left) + label_left,
-                            label_up));
-  
-    label->runAction(
-        MoveBy::create(FALLING_TIME, Vec2(0, -label_up - label->getContentSize().height))
-                         );
+MyLabel * HelloWorld::rand_add_label() {
+    double rand_num = CCRANDOM_0_1();
+    string& txt = all_symbols[floor(rand_num * all_symbols.size())];
+    int font_size = 25*(rand_num + 1);
+    auto label = MyLabel::create(txt, "Arial", font_size,
+                            Color4B(0, rand_num*20 + 80, 0, rand_num*255),
+                            Color4B(0, rand_num*40 + 215, 0, rand_num*255)
+                        );
+    this->addChild(label, rand_num*100);
+    label->fallFromUp();
     return label;
 }
-void HelloWorld::symbols_falling(float)
+void HelloWorld::init_add_labels(float)
 {
     if (label_vec.size() < VEC_SIZE) {
-        // 增加一百个label
+        // 增加多个label
         for (int i = 0; i < 50; ++ i) {
             auto label = rand_add_label();
-            Color4B col = label->getTextColor();
-            label_vec.push_back({
-                label,
-                Color4B(col.r, col.g*2 + 55, col.b, col.a),
-                col
-            });
+            label_vec.push_back(label);
         }
     }
 }
-void HelloWorld::check_touch(float t) {
+void HelloWorld::time_circle(float t) {
     timer += t;
-    int char_id = 0;
-    if (timer > 30) {
+    if (timer > 3*EACH_CHAR_TIME) {
         timer = 0;
     }
-    if (timer < 10) {
-        char_id = 0;
-    } else if (timer < 20) {
-        char_id = 1;
-    } else if (timer < 30) {
-        char_id = 2;
-    }
-    char** mat = character_mat[char_id];
-    Rect r = char_rect_border[char_id];
-    for (auto mylabel : label_vec) {
-        auto label = mylabel.label;
-        auto pos = label->getPosition();
-        // 检查是否有到达底部的label，有的话重新放回顶部
-        if (pos.y < 0) {
-            rand_add_label(label);
-        }
-        // highlight the label:
-        if (r.containsPoint(pos) && mat[(int)pos.x][(int)pos.y] > 0) {
-            label->setTextColor(mylabel.hilight);
-            label->stopAllActions();
-        } else {
-            if (label->getNumberOfRunningActions() == 0) {
-                label->setTextColor(mylabel.normal);
-                label->runAction(MoveBy::create(FALLING_TIME, Vec2(0, -pos.y - visibleSize.height)));
-            }
-        }
-    }
+    MyLabel::back_char_id = (int)timer/EACH_CHAR_TIME;
 }
 void HelloWorld::show_char(float) {
     Rect r = char_rect_border[1];
@@ -183,7 +141,7 @@ void HelloWorld::show_char(float) {
         for (int j = 0; j < visibleSize.height; j += 5 ) {
             auto pos = Vec2(i,j);
             if (r.containsPoint(pos) && mat[i][j] > 0) {
-                auto l = Label::create("*", "Arial", 20);
+                auto l = MyLabel::create("*", "Arial", 20);
                 l->setPosition(pos);
                 this->addChild(l, 1);
             }

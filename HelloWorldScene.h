@@ -3,15 +3,10 @@
 
 #include "cocos2d.h"
 #include <vector>
-
+#include "config.h"
+#include "MyLabel.h"
 USING_NS_CC;
 using namespace std;
-
-struct LabelTowColor {
-    Label* label;
-    Color4B hilight;
-    Color4B normal;
-};
 class HelloWorld : public cocos2d::Layer
 {
 public:
@@ -29,19 +24,21 @@ public:
 private:
     vector<Rect> char_rect_border;
     vector<string> all_symbols;
-    vector<LabelTowColor> label_vec;
+    vector<MyLabel*> label_vec;
     vector<Action*> action_vec;
     vector<char**> character_mat;
     Size visibleSize;
     Vec2 origin;
-    void symbols_falling(float);
-    void check_touch(float);
+    double timer;
+    
+    
+    void init_add_labels(float);
+    void time_circle(float);
     void show_char(float);
-    Label* rand_add_label(Label * label=nullptr);
+    MyLabel* rand_add_label();
     void load_characters();
     void fill_symbols();
     
-    double timer;
 };
 
 #endif // __HELLOWORLD_SCENE_H__
