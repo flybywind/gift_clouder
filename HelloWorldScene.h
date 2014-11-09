@@ -27,10 +27,11 @@ public:
     CREATE_FUNC(HelloWorld);
     
 private:
+    vector<Rect> char_rect_border;
     vector<string> all_symbols;
     vector<LabelTowColor> label_vec;
     vector<Action*> action_vec;
-    vector<set<Vec2> > character_vec;
+    vector<char**> character_mat;
     Size visibleSize;
     Vec2 origin;
     void symbols_falling(float);

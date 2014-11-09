@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <math.h>
 #define FALLING_TIME 5
-#define VEC_SIZE 1000
+#define VEC_SIZE 500
 USING_NS_CC;
 
 
@@ -99,7 +99,7 @@ bool HelloWorld::init()
     timer = 0;
     fill_symbols();
     load_characters();
-    schedule(schedule_selector(HelloWorld::symbols_falling), 0.005);
+    schedule(schedule_selector(HelloWorld::symbols_falling), 0.5);
     schedule(schedule_selector(HelloWorld::check_touch), 0.5);
 //    show_char(0);
     return true;
@@ -130,14 +130,16 @@ Label * HelloWorld::rand_add_label(Label* label) {
 void HelloWorld::symbols_falling(float)
 {
     if (label_vec.size() < VEC_SIZE) {
-        // 增加一个label
-        auto label = rand_add_label();
-        Color4B col = label->getTextColor();
-        label_vec.push_back({
-            label,
-            Color4B(col.r, col.g*2 + 55, col.b, col.a),
-            col
-        });
+        // 增加一百个label
+        for (int i = 0; i < 50; ++ i) {
+            auto label = rand_add_label();
+            Color4B col = label->getTextColor();
+            label_vec.push_back({
+                label,
+                Color4B(col.r, col.g*2 + 55, col.b, col.a),
+                col
+            });
+        }
     }
 }
 void HelloWorld::check_touch(float t) {
@@ -153,8 +155,8 @@ void HelloWorld::check_touch(float t) {
     } else if (timer < 30) {
         char_id = 2;
     }
-    set<Vec2>& vec_set = character_vec[char_id];
-    
+    char** mat = character_mat[char_id];
+    Rect r = char_rect_border[char_id];
     for (auto mylabel : label_vec) {
         auto label = mylabel.label;
         auto pos = label->getPosition();
@@ -163,7 +165,7 @@ void HelloWorld::check_touch(float t) {
             rand_add_label(label);
         }
         // highlight the label:
-        if (vec_set.count(Vec2((int)pos.x, (int)pos.y)) > 0) {
+        if (r.containsPoint(pos) && mat[(int)pos.x][(int)pos.y] > 0) {
             label->setTextColor(mylabel.hilight);
             label->stopAllActions();
         } else {
@@ -174,13 +176,13 @@ void HelloWorld::check_touch(float t) {
         }
     }
 }
-
 void HelloWorld::show_char(float) {
-    set<Vec2>&char_sym = character_vec[1];
-    for (int i = 0; i < visibleSize.width; ++i) {
-        for (int j = 0; j < visibleSize.height; ++j ) {
+    Rect r = char_rect_border[1];
+    char** mat = character_mat[1];
+    for (int i = 0; i < visibleSize.width; i += 5) {
+        for (int j = 0; j < visibleSize.height; j += 5 ) {
             auto pos = Vec2(i,j);
-            if (char_sym.count(pos) > 0) {
+            if (r.containsPoint(pos) && mat[i][j] > 0) {
                 auto l = Label::create("*", "Arial", 20);
                 l->setPosition(pos);
                 this->addChild(l, 1);
@@ -210,16 +212,44 @@ void HelloWorld::load_characters() {
     double yp = visibleSize.height/2 - min_len/2;
     char file_name[100];
     int xloc, yloc;
-    character_vec.resize(3);
+    char_rect_border.resize(3);
+    character_mat.resize(3);
     for (int i = 1; i <= 3; ++i) {
         sprintf(file_name, "%d.txt", i);
         const string cs_file_path = FileUtils::getInstance()->fullPathForFilename(file_name);
         FILE* fid = fopen(cs_file_path.c_str(), "r");
-        set<Vec2> &v = character_vec[i-1];
+        char** &mat = character_mat[i-1];
+        Rect& rect = char_rect_border[i-1];
+        int left = visibleSize.width;
+        int right = 0;
+        int up = 0;
+        int buttom = visibleSize.height;
+        // initial mat:
+        int mat_width = (int)visibleSize.width;
+        int mat_height = (int)visibleSize.height;
+        mat = new char*[mat_width];
+        for (int i = 0; i < mat_width; ++i) {
+            mat[i] = new char[mat_height];
+            bzero(mat[i], mat_height);
+        }
+        
         while (fscanf(fid, "%d,%d", &yloc, &xloc) != EOF) {
             int x = xp + xloc*scale;
             int y = yp + (character_size - yloc)*scale;
-            v.insert(Vec2(x,y));
+            mat[x][y] = 1;
+            if (x < left) {
+                left = x;
+            }
+            if (x > right) {
+                right = x;
+            }
+            if (y < buttom) {
+                buttom = y;
+            }
+            if (y > up) {
+                up = y;
+            }
         }
+        rect.setRect(left, buttom, right - left, up - buttom);
     }
 }
