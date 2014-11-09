@@ -129,18 +129,17 @@ void HelloWorld::init_add_labels(float)
 }
 void HelloWorld::time_circle(float t) {
     timer += t;
-    if (timer > 3*EACH_CHAR_TIME) {
+    if (timer > 3*EACH_CHAR_TIME + 5) {
         timer = 0;
     }
     MyLabel::back_char_id = (int)timer/EACH_CHAR_TIME;
 }
 void HelloWorld::show_char(float) {
-    Rect r = char_rect_border[1];
     char** mat = character_mat[1];
     for (int i = 0; i < visibleSize.width; i += 5) {
         for (int j = 0; j < visibleSize.height; j += 5 ) {
             auto pos = Vec2(i,j);
-            if (r.containsPoint(pos) && mat[i][j] > 0) {
+            if (mat[i][j] > 0) {
                 auto l = MyLabel::create("*", "Arial", 20);
                 l->setPosition(pos);
                 this->addChild(l, 1);
@@ -170,18 +169,12 @@ void HelloWorld::load_characters() {
     double yp = visibleSize.height/2 - min_len/2;
     char file_name[100];
     int xloc, yloc;
-    char_rect_border.resize(3);
     character_mat.resize(3);
     for (int i = 1; i <= 3; ++i) {
         sprintf(file_name, "%d.txt", i);
         const string cs_file_path = FileUtils::getInstance()->fullPathForFilename(file_name);
         FILE* fid = fopen(cs_file_path.c_str(), "r");
         char** &mat = character_mat[i-1];
-        Rect& rect = char_rect_border[i-1];
-        int left = visibleSize.width;
-        int right = 0;
-        int up = 0;
-        int buttom = visibleSize.height;
         // initial mat:
         int mat_width = (int)visibleSize.width;
         int mat_height = (int)visibleSize.height;
@@ -195,19 +188,6 @@ void HelloWorld::load_characters() {
             int x = xp + xloc*scale;
             int y = yp + (character_size - yloc)*scale;
             mat[x][y] = 1;
-            if (x < left) {
-                left = x;
-            }
-            if (x > right) {
-                right = x;
-            }
-            if (y < buttom) {
-                buttom = y;
-            }
-            if (y > up) {
-                up = y;
-            }
         }
-        rect.setRect(left, buttom, right - left, up - buttom);
     }
 }

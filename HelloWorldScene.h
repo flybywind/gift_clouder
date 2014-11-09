@@ -22,7 +22,6 @@ public:
     CREATE_FUNC(HelloWorld);
     
 private:
-    vector<Rect> char_rect_border;
     vector<string> all_symbols;
     vector<MyLabel*> label_vec;
     vector<Action*> action_vec;
