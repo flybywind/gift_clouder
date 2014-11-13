@@ -18,7 +18,7 @@ def get_under_sqrt(x, a):
 	c = x**2 - 1
 	return b**2 - 4*a*c, b
 
-step = 0.05
+step = 0.005
 yabove = []
 ybelow = []
 xlist = []
@@ -37,19 +37,33 @@ while u > 0:
 		step *= 0.9
 		x = x0 + step
 		u, b = get_under_sqrt(x, a)
-# delete too near points in yary
-n = len(yabove) - 1
-y = yabove[n]
-while n >= 0 and np.abs(yabove[n] - y) < 0.05:
-	y = yabove[n]
-	n -= 1
-half_xa = xlist[:(n+1)] + [xlist[-1]]
-half_xb = xlist[:(n+1)]
-half_ya = yabove[:(n+1)] + [yabove[-1]]
-half_yb = ybelow[:(n+1)]
-xary1 = np.array(half_xa + half_xb)
-yary1 = np.array(half_ya + half_yb)
-plt.plot(np.hstack((xary1, -xary1)), np.hstack((yary1, yary1)), 'ro')
+
+# delete too near points in curve
+i = 0
+indx = [i]
+x0 = xlist[i]
+y0 = yabove[i]
+for i, x in enumerate(xlist[1:]):
+	y = yabove[i+1]
+	if sqrt((x0 - x)**2 + (y0 - y)**2) < 0.1:
+		continue
+	indx.append(i+1)
+	x0 = x
+	y0 = y
+
+xary = np.array(xlist)
+# above part
+half_xa = xary[indx]
+# below part
+half_xb = xary[indx]
+yary1 = np.array(yabove)
+yary2 = np.array(ybelow)
+half_ya = yary1[indx]
+half_yb = yary2[indx]
+# merge above and below parts
+half_x = np.hstack((half_xa, half_xb))
+half_y = np.hstack((half_ya, half_yb))
+plt.plot(np.hstack((half_x, -half_x)), np.hstack((half_y, half_y)), 'ro')
 plt.plot(half_xa, half_ya, 'g*')
-plt.plot(-np.array(half_xb), half_yb, 'y.')
+plt.plot(-half_xb, half_yb, 'y.')
 plt.savefig('myheart.png', format='png')
